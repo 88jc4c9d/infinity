@@ -11,5 +11,8 @@
             "Infinity\\": "src/"
         }
     },
-    "require": {}
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^7.1"
+    }
 }
