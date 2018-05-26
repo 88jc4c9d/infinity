@@ -1,0 +1,15 @@
+{
+    "name": "burhan/infinity-tech-test",
+    "authors": [
+        {
+            "name": "Burhan Ali",
+            "email": "b.ali@btinternet.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Infinity\\": "src/"
+        }
+    },
+    "require": {}
+}
