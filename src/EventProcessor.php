@@ -4,26 +4,24 @@ namespace Infinity;
 
 class EventProcessor
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     private $inputDirectory;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $outputDirectory;
 
-    /**
-     * @var Logger
-     */
+    /** @var Logger */
     private $logger;
+
+    /** @var CsvParser */
+    private $csvParser;
 
     public function __construct(string $inputDirectory, string $outputDirectory)
     {
         $this->inputDirectory = $inputDirectory;
         $this->outputDirectory = $outputDirectory;
         $this->logger = new Logger();
+        $this->csvParser = new CsvParser();
     }
 
     public function run()
@@ -43,11 +41,10 @@ class EventProcessor
     {
         $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-        foreach($lines as $line) {
-            $this->logger->log($line);
-        }
+        $parsedData = $this->csvParser->parseData($lines);
 
-        // TODO: Parse CSV
+        $this->logger->log($file);
+        var_dump($parsedData);
 
         // TODO: Insert into database
     }
