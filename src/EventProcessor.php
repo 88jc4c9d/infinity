@@ -32,6 +32,12 @@ class EventProcessor
 
     public function run()
     {
+        // Use a lock to prevent multiple instances from running
+        $lock = fopen($this->inputDirectory, "rw");
+        if(!flock($lock, LOCK_EX | LOCK_NB)) {
+            exit(-1);
+        }
+
         $files = glob($this->inputDirectory . "/*.csv");
         if (! $files) {
             $this->logger->log("No files to process.");
@@ -58,6 +64,8 @@ class EventProcessor
                 $this->logger->log("Unable to move $file to $processedFile");
             }
         }
+
+        fclose($lock);
     }
 
     /**
