@@ -36,6 +36,10 @@ class EventProcessor
             exit(1);
         }
 
+        if(!is_dir($this->outputDirectory)) {
+            mkdir($this->outputDirectory);
+        }
+
         $this->database->createTableIfNeeded();
 
         foreach($files as $file) {
