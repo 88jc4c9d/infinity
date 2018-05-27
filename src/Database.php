@@ -10,12 +10,8 @@ class Database
     /** @var PDO  */
     private $connection;
 
-    /** @var Logger */
-    private $logger;
-
-    public function __construct(Logger $logger)
+    public function __construct()
     {
-        $this->logger = $logger;
         $this->connection = new PDO("mysql:dbname=infinity;host=localhost", "infinity", "infinity");
     }
 
@@ -32,6 +28,7 @@ class Database
      *
      * @param string $table
      * @param array $parsedData
+     * @throws Exception
      */
     public function insertData(string $table, array $parsedData)
     {
@@ -52,11 +49,6 @@ class Database
         );
 
         $statement = $this->connection->prepare($sql);
-        try {
-            $statement->execute(array_merge(... $rows));
-        } catch(Exception $e) {
-            $this->logger->log("Error inserting data: {$e->getMessage()}");
-            // Should the file be marked as processed, or left to be tried again?
-        }
+        $statement->execute(array_merge(... $rows));
     }
 }

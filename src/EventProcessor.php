@@ -2,6 +2,8 @@
 
 namespace Infinity;
 
+use Exception;
+
 class EventProcessor
 {
     /** @var string */
@@ -25,7 +27,7 @@ class EventProcessor
         $this->outputDirectory = $outputDirectory;
         $this->logger = new Logger();
         $this->csvParser = new CsvParser($this->logger);
-        $this->database = new Database($this->logger);
+        $this->database = new Database();
     }
 
     public function run()
@@ -43,10 +45,25 @@ class EventProcessor
         $this->database->createTableIfNeeded();
 
         foreach($files as $file) {
-           $this->processFile($file);
+            try {
+                $this->processFile($file);
+            } catch (EventProcessException $e) {
+                $this->logger->log("Skipping file '$file': {$e->getMessage()}");
+                continue;
+            }
+
+            // Move the file to the processed directory
+            $processedFile = str_replace($this->inputDirectory, $this->outputDirectory, $file);
+            if(!rename($file, $processedFile)) {
+                $this->logger->log("Unable to move $file to $processedFile");
+            }
         }
     }
 
+    /**
+     * @param string $file
+     * @throws EventProcessException
+     */
     private function processFile(string $file)
     {
         $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -54,11 +71,14 @@ class EventProcessor
         try {
             $parsedData = $this->csvParser->parseData($lines);
         } catch (CsvParseException $e) {
-            $this->logger->log("Skipping invalid CSV file $file: {$e->getMessage()}");
-            return;
+            throw new EventProcessException("Invalid CSV file: {$e->getMessage()}", null, $e);
         }
 
-        $this->database->insertData("event", $parsedData);
+        try {
+            $this->database->insertData("event", $parsedData);
+        } catch (Exception $e) {
+            throw new EventProcessException("Error inserting data: {$e->getMessage()}", null, $e);
+        }
 
         $this->logger->log(sprintf(
             "Processed file %s, total lines %d, skipped lines %d",
