@@ -6,12 +6,18 @@ use DateTime;
 
 class CsvParser
 {
+    const HEADER_CALL_REF = 'callRef';
+    const HEADER_ACTION = 'eventAction';
+    const HEADER_CURRENCY_CODE = 'eventCurrencyCode';
+    const HEADER_DATE_TIME = 'eventDatetime';
+    const HEADER_VALUE = 'eventValue';
+
     const EXPECTED_HEADERS = [
-        'callRef',
-        'eventAction',
-        'eventCurrencyCode',
-        'eventDatetime',
-        'eventValue'
+        self::HEADER_CALL_REF,
+        self::HEADER_ACTION,
+        self::HEADER_CURRENCY_CODE,
+        self::HEADER_DATE_TIME,
+        self::HEADER_VALUE
     ];
 
     const DATE_FORMAT = 'Y-m-d H:i:s';
@@ -84,7 +90,7 @@ class CsvParser
         $headers = array_map('trim', explode(",", $headerRow));
 
         if (count($headers) !== count(self::EXPECTED_HEADERS)) {
-            throw new CsvParseException("Not enough column headers: " . $headerRow);
+            throw new CsvParseException("Incorrect number of column headers: " . $headerRow);
         }
 
         $sortedHeaders = $headers;
@@ -97,6 +103,11 @@ class CsvParser
     }
 
     /**
+     * Parse the data from an individual row.
+     *
+     * Given that columns in a file can appear in any order, the headers are included so that the right validation
+     * can be applied to the right field.
+     *
      * @param array $headers
      * @param string $dataRow
      * @return array
@@ -113,36 +124,36 @@ class CsvParser
         $data = array_combine($headers, $values);
 
         // Validate the event time field
-        $date = DateTime::createFromFormat(self::DATE_FORMAT, $data['eventDatetime']);
-        if (!$date || $date->format(self::DATE_FORMAT) !== $data['eventDatetime']) {
+        $date = DateTime::createFromFormat(self::DATE_FORMAT, $data[self::HEADER_DATE_TIME]);
+        if (!$date || $date->format(self::DATE_FORMAT) !== $data[self::HEADER_DATE_TIME]) {
             throw new CsvParseException("Invalid date format.");
         }
 
         // Validate the event action field
-        if (!$data['eventAction']) {
+        if (!$data[self::HEADER_ACTION]) {
             throw new CsvParseException("Missing event action.");
         }
 
         // Validate the call ref field
-        if (!$data['callRef'] || !is_integer(filter_var($data['callRef'], FILTER_VALIDATE_INT))) {
+        if (!$data[self::HEADER_CALL_REF] || !is_integer(filter_var($data[self::HEADER_CALL_REF], FILTER_VALIDATE_INT))) {
             throw new CsvParseException("Missing or invalid call ref.");
         }
 
         // Validate the value field if it is present
-        if ($data['eventValue']) {
-            if (!is_float(filter_var($data['eventValue'], FILTER_VALIDATE_FLOAT))){
+        if ($data[self::HEADER_VALUE]) {
+            if (!is_float(filter_var($data[self::HEADER_VALUE], FILTER_VALIDATE_FLOAT))){
                 throw new CsvParseException("Invalid value.");
             }
 
             // If value is there, then currency must also be there
-            if (!$data['eventCurrencyCode']) {
+            if (!$data[self::HEADER_CURRENCY_CODE]) {
                 throw new CsvParseException("Missing currency code.");
             }
         }
 
         // Validate the currency code if it is there
-        if ($data['eventCurrencyCode']) {
-            if(strlen($data['eventCurrencyCode']) !== 3) {
+        if ($data[self::HEADER_CURRENCY_CODE]) {
+            if(strlen($data[self::HEADER_CURRENCY_CODE]) !== 3) {
                 throw new CsvParseException("Invalid currency code.");
             }
         }
