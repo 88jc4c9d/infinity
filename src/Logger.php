@@ -9,5 +9,6 @@ class Logger
      */
     public function log(string $message) {
         echo $message, PHP_EOL;
+        syslog(LOG_INFO, $message);
     }
 }
