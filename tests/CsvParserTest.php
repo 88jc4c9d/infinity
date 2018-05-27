@@ -1,6 +1,7 @@
 <?php
 
 use Infinity\CsvParser;
+use Infinity\Logger;
 use PHPUnit\Framework\TestCase;
 
 final class CsvParserTest extends TestCase
@@ -11,7 +12,7 @@ final class CsvParserTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $this->csvParser = new CsvParser;
+        $this->csvParser = new CsvParser(new Logger);
     }
 
     /**
@@ -76,6 +77,83 @@ final class CsvParserTest extends TestCase
             ["eventDatetime,eventAction,callRef,callRef,eventValue,eventCurrencyCode"],
             // Unknown headers
             ["eventDatetime,eventAction,callRef,eventValue,FOO"]
+        ];
+    }
+
+    /**
+     * @param string $rowData
+     * @param array $expected
+     * @dataProvider parseGoodRowData
+     */
+    public function testParseGoodRow(string $rowData, array $expected)
+    {
+        $headers = ["eventDatetime","eventAction","callRef","eventValue","eventCurrencyCode"];
+
+        $parsedRow = $this->csvParser->parseDataRow($headers, $rowData);
+
+        $this->assertEquals($expected, $parsedRow);
+    }
+
+    /**
+     * @return array
+     */
+    public function parseGoodRowData()
+    {
+        return [
+            // [ row data, parsed data ]
+
+            // All columns populated
+            [
+                "2018-01-15 10:14:56,foo,1,1.00,GBP",
+                ["2018-01-15 10:14:56","foo",1,1.00,"GBP"]
+            ],
+
+            // Value and currency omitted
+            [
+                "2018-01-15 10:14:56,foo,1,,",
+                ["2018-01-15 10:14:56","foo",1,null,null]
+            ],
+
+            // Value omitted but currency included
+            [
+                "2018-01-15 10:14:56,foo,1,,GBP",
+                ["2018-01-15 10:14:56","foo",1,null,"GBP"]
+            ],
+        ];
+    }
+
+    /**
+     * @param string $dataRow
+     * @dataProvider parseBadRowData
+     * @expectedException \Infinity\CsvParseException
+     */
+    public function testParseBadRow(string $dataRow)
+    {
+        $headers = ["eventDatetime","eventAction","callRef","eventValue","eventCurrencyCode"];
+
+        $this->csvParser->parseDataRow($headers, $dataRow);
+    }
+
+    /**
+     * @return array
+     */
+    public function parseBadRowData()
+    {
+        return [
+            // Not enough columns
+            ["2018-01-15 10:14:56,foo,1,1.00"],
+            // Too many columns
+            ["2018-01-15 10:14:56,foo,1,1.00,GBP,BAR"],
+            // Invalid date format
+            ["2018/01/15 10:14:56,foo,1,1.00,GBP"],
+            // Missing required field
+            ["2018-01-15 10:14:56,,1,1.00,GBP"],
+            // Invalid integer value
+            ["2018-01-15 10:14:56,foo,bar,1.00,GBP"],
+            // Invalid decimal value
+            ["2018-01-15 10:14:56,foo,1,bar,GBP"],
+            // Invalid ISO country code field
+            ["2018-01-15 10:14:56,foo,1,1.00,X"],
         ];
     }
 }
