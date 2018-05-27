@@ -16,12 +16,16 @@ class EventProcessor
     /** @var CsvParser */
     private $csvParser;
 
+    /** @var Database */
+    private $database;
+
     public function __construct(string $inputDirectory, string $outputDirectory)
     {
         $this->inputDirectory = $inputDirectory;
         $this->outputDirectory = $outputDirectory;
         $this->logger = new Logger();
         $this->csvParser = new CsvParser($this->logger);
+        $this->database = new Database();
     }
 
     public function run()
@@ -31,6 +35,8 @@ class EventProcessor
             $this->logger->log("No files to process.");
             exit(1);
         }
+
+        $this->database->createTableIfNeeded();
 
         foreach($files as $file) {
            $this->processFile($file);
