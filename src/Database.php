@@ -30,9 +30,10 @@ class Database
      *
      * TODO: For larger data sets, either support for streaming single row inserts or batching of multi-row inserts.
      *
+     * @param string $table
      * @param array $parsedData
      */
-    public function insertData(array $parsedData)
+    public function insertData(string $table, array $parsedData)
     {
         $headers = $parsedData['headers'];
         $rows = $parsedData['data'];
@@ -44,7 +45,8 @@ class Database
         $allPlaceHolders = implode(',', array_fill(0, count($rows), $singleRowPlaceholder));
 
         $sql = sprintf(
-            "insert into event (%s) values %s",
+            "insert into %s (%s) values %s",
+            $table,
             implode(",", $headers ),
             $allPlaceHolders
         );

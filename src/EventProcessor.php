@@ -54,7 +54,7 @@ class EventProcessor
             return;
         }
 
-        $this->database->insertData($parsedData);
+        $this->database->insertData("event", $parsedData);
 
         $this->logger->log(sprintf(
             "Processed file %s, total lines %d, skipped lines %d",
