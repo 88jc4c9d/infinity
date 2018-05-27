@@ -30,6 +30,9 @@ class EventProcessor
         $this->database = new Database();
     }
 
+    /**
+     * Main entry point for this class.
+     */
     public function run()
     {
         // Use a lock to prevent multiple instances from running
@@ -38,17 +41,14 @@ class EventProcessor
             exit(-1);
         }
 
+        // Grab the list of uploaded files to work on
         $files = glob($this->inputDirectory . "/*.csv");
         if (! $files) {
             $this->logger->log("No files to process.");
             exit(1);
         }
 
-        if(!is_dir($this->outputDirectory)) {
-            mkdir($this->outputDirectory);
-        }
-
-        $this->database->createTableIfNeeded();
+        $this->init();
 
         foreach($files as $file) {
             try {
@@ -69,10 +69,31 @@ class EventProcessor
     }
 
     /**
+     * Parse a CSV file and insert its contents into
      * @param string $file
      * @throws EventProcessException
      */
     private function processFile(string $file)
+    {
+        $parsedData = $this->parseFile($file);
+
+        $this->storeParsedData($parsedData);
+
+        $this->logger->log(sprintf(
+            "Processed file %s, total lines %d, skipped lines %d",
+            $file,
+            $parsedData['numProcessedLines'],
+            $parsedData['numSkippedLines']
+        ));
+    }
+
+    /**
+     * Parse a CSV file and extract off valid data.
+     * @param string $file
+     * @return array
+     * @throws EventProcessException
+     */
+    private function parseFile(string $file)
     {
         $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
@@ -82,17 +103,32 @@ class EventProcessor
             throw new EventProcessException("Invalid CSV file: {$e->getMessage()}", null, $e);
         }
 
+        return $parsedData;
+    }
+
+    /**
+     * @param array $parsedData
+     * @throws EventProcessException
+     */
+    private function storeParsedData(array $parsedData)
+    {
         try {
             $this->database->insertData("event", $parsedData);
         } catch (Exception $e) {
             throw new EventProcessException("Error inserting data: {$e->getMessage()}", null, $e);
         }
+    }
 
-        $this->logger->log(sprintf(
-            "Processed file %s, total lines %d, skipped lines %d",
-            $file,
-            $parsedData['numProcessedLines'],
-            $parsedData['numSkippedLines']
-        ));
+    /**
+     * Various bits of setup.
+     * Called all the time but in practise, this should be one time setup.
+     */
+    private function init()
+    {
+        if(!is_dir($this->outputDirectory)) {
+            mkdir($this->outputDirectory);
+        }
+
+        $this->database->createTableIfNeeded();
     }
 }

@@ -25,6 +25,7 @@ class Database
      * Insert the given data in a single multi-insert statement, using bind variables.
      *
      * TODO: For larger data sets, either support for streaming single row inserts or batching of multi-row inserts.
+     * TODO: Confirm that every row has the right number of columns.
      *
      * @param string $table
      * @param array $parsedData
