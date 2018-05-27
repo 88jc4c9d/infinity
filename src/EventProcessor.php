@@ -25,7 +25,7 @@ class EventProcessor
         $this->outputDirectory = $outputDirectory;
         $this->logger = new Logger();
         $this->csvParser = new CsvParser($this->logger);
-        $this->database = new Database();
+        $this->database = new Database($this->logger);
     }
 
     public function run()
@@ -54,13 +54,13 @@ class EventProcessor
             return;
         }
 
+        $this->database->insertData($parsedData);
+
         $this->logger->log(sprintf(
             "Processed file %s, total lines %d, skipped lines %d",
             $file,
             $parsedData['numProcessedLines'],
             $parsedData['numSkippedLines']
         ));
-
-        // TODO: Insert into database
     }
 }

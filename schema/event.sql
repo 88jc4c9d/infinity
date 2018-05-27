@@ -1,5 +1,5 @@
 create table if not exists event (
-    eventDateTime date not null,
+    eventDateTime timestamp not null,
     eventAction varchar(20) not null,
     callRef int not null,
     eventValue float,

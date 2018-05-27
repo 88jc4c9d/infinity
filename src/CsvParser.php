@@ -31,7 +31,9 @@ class CsvParser
      *      'data' => [
      *          [ ... ],
      *          ...
-     *      ]
+     *      ],
+     *      'numProcessedLines' => n,
+     *      'numSkippedLines' => m
      *  ]
      * @throws CsvParseException
      */
